@@ -2,7 +2,11 @@ from datetime import datetime, timedelta
 from flask import Flask, render_template, redirect, request, abort, url_for
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from data import db_session
-from data.database_models import db, Groups, Person, Attendance, Lesson, Teacher
+from data.groups import Groups
+from data.person import Person
+from data.teacher import Teacher
+from data.lesson import Lesson
+from data.attendance import Attendance
 from data.forms import RegisterForm, LoginForm, PersonForm, GroupForm
 #import dlib
 #import cv2
@@ -142,5 +146,5 @@ def add_jobs(group_id):
 
 
 if __name__ == "__main__":
-    db_session.global_init("db/mars_explorer.db")
+    db_session.global_init("db/people.db")
     app.run(debug=False)

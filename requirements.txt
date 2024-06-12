@@ -1,13 +1,3 @@
-cmake
+flask
 dlib
-flask-sqlalchemy
-Flask
-lapx
-scipy
-dill
-pyyaml
-matplotlib
-psutil
-torch
-tf-keras==2.16.0
-tf-keras-nightly
+ultralytics
