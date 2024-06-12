@@ -72,7 +72,9 @@ def reqister():
         return redirect('/')
     return render_template('register.html', title='Регистрация', form=form)
 
-@app.route("/")
+@app.route("/", methods=['GET', 'POST'])
+def start():
+    return render_template('start.html')
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
@@ -81,13 +83,23 @@ def login():
         user = db_sess.query(Teacher).filter(Teacher.login == form.login.data).first()
         if user and user.check_password(form.password.data):
             login_user(user, remember=form.remember_me.data)
+            print(user.id)
             return redirect(url_for("index", user_id=user.id))
         return render_template('login.html',
                                message="Неправильный логин или пароль",
                                form=form)
     return render_template('login.html', title='Авторизация', form=form)
-
-
+"""
+@app.route("/")
+def index():
+    db_sess = db_session.create_session()
+    news = db_sess.query(Lesson).filter(Lesson.teacher_id != True)
+    # if current_user.is_authenticated:
+    #     news = db_sess.query(News).filter(
+    #         (News.user == current_user) | (News.is_private != True))
+    # else:
+    #     news = db_sess.query(News).filter(News.is_private != True)
+    return render_template("index.html", news=news)"""
 @app.route("/<user_id>")
 def index(user_id):
     db_sess = db_session.create_session()

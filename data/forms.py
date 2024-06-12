@@ -16,6 +16,7 @@ class LoginForm(FlaskForm):
     password = PasswordField('Пароль', validators=[DataRequired()])
     remember_me = BooleanField('Запомнить меня')
     submit = SubmitField('Войти')
+    submit_reg = SubmitField('Зарегистрироваться')
 
 
 class PersonForm(FlaskForm):
@@ -24,5 +25,6 @@ class PersonForm(FlaskForm):
 
 
 class GroupForm(FlaskForm):
-    name = StringField('ФИО')
+    name = StringField('Название')
+
     submit = SubmitField('Применить')
