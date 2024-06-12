@@ -1,10 +1,17 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends "base.html" %}
 
-</body>
-</html>
+{% block body %}
+    <h1>Создайте группу</h1>
+    <form action="group_info" method="post">
+        {{ form.hidden_tag() }}
+        <p>
+            {{ form.name.label }}<br>
+            {{ form.name(class="form-control", type="text") }}<br>
+        </p>
+
+        <p>{{ form.submit(type="submit", class="btn btn-primary") }}</p>
+
+        <div>{{ message }}</div>
+
+    </form>
+{% endblock %}

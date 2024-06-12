@@ -2,7 +2,7 @@
 
 {% block body %}
     <h1>Авторизация</h1>
-    <form action="" method="post">
+    <form action="/lesson" method="post">
         {{ form.hidden_tag() }}
         <p>
             {{ form.login.label }}<br>
@@ -26,9 +26,6 @@
         <p>{{ form.submit(type="submit", class="btn btn-primary") }}</p>
 
         <div>{{ message }}</div>
-
-    </form>
-    <form action="/register" method="post">
 
     </form>
 {% endblock %}
