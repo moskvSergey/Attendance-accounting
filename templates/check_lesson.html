@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block body %}
+ <h1>Информация о уроках</h1>
+    {%for less in lesson %}
+    <p>ID урока: {{ less.id }}</p>
+    <p>Id группы: {{ less.name }}</p>
+    <p>Id преподавателя: {{ less.name }}</p>
+    {% endfor %}
+    <a href="/add_lesson" class="button">Добавить урок</a>
+   <a href="/add_group" class="button">Добавить группу</a>
+{% endblock %}

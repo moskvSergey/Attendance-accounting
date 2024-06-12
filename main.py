@@ -7,8 +7,8 @@ from data.person import Person
 from data.teacher import Teacher
 from data.lesson import Lesson
 from data.attendance import Attendance
-from data.forms import RegisterForm, LoginForm, PersonForm, GroupForm
-from get_vector import get_face_vector
+from data.forms import RegisterForm, LoginForm, PersonForm, GroupForm, LessonForm
+#from get_vector import get_face_vector
 
 
 app = Flask(__name__)
@@ -79,13 +79,13 @@ def index(user_id):
     if current_user.is_authenticated:
         current_time = datetime.now()
         two_hours_ago = current_time - timedelta(hours= 2)
-        lesson = db_sess.query(Lesson).filter(Lesson.teacher_id==user_id, Lesson.start_time < current_time, Lesson.start_time > two_hours_ago).first()
+        lesson = db_sess.query(Lesson).filter(Lesson.teacher_id==user_id).first()
         if lesson:
             group = db_sess.query(Groups).filter(Groups.id == lesson.group_id).first()
             attendance_records = db_sess.query(Attendance, Person).join(Person).filter(Attendance.lesson_id == lesson.id).all()
-            return render_template("index.html", grop_name=group.name, attendance_records=attendance_records)
+            return redirect(url_for("check_lesson"))
         else:
-            return redirect(url_for("add_group"))
+            return redirect(url_for("add_lesson"))
     else:
         return redirect(url_for("login"))
 
@@ -103,7 +103,25 @@ def add_group():
         return redirect(url_for("group_info", group_id=group.id))
     return render_template('add_group.html', form=form)
 
+@app.route('/add_lesson', methods=['GET', 'POST'])
+def add_lesson():
+    form = LessonForm()
+    if form.validate_on_submit():
+        db_sess = db_session.create_session()
+        lesson = Lesson()
+        lesson.teacher_id = form.teacher_id.data
+        lesson.group_id = form.group_id.data
+        db_sess.add(lesson)
+        db_sess.commit()
+        return redirect(url_for("video_feed"))
+    return render_template('add_lesson.html', form=form)
 
+@app.route('/check_lesson', methods=['GET', 'POST'])
+def check_lesson():
+    db_sess = db_session.create_session()
+    lesson = db_sess.query(Lesson)
+
+    return render_template('check_lesson.html', lesson=lesson)
 @app.route('/group/<group_id>', methods=['GET'])
 def group_info(group_id):
     db_sess = db_session.create_session()
@@ -124,7 +142,7 @@ def add_person(group_id):
 
         if 'photo' in request.files:
             photo = request.files['photo']
-            face_points = get_face_vector(photo)
+            face_points = []
 
             # Сохранить вектор точек лица в базе данных
             person.face_vector = face_points
