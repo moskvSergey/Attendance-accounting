@@ -102,7 +102,12 @@ def add_group():
         db_sess.commit()
         return redirect(url_for("group_info", group_id=group.id))
     return render_template('add_group.html', form=form)
-
+@app.route('/check_group', methods=['GET', 'POST'])
+@login_required
+def check_group():
+    db_sess = db_session.create_session()
+    group = db_sess.query(Groups)
+    return render_template('check_group.html', group=group)
 @app.route('/add_lesson', methods=['GET', 'POST'])
 def add_lesson():
     form = LessonForm()
