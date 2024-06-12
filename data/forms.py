@@ -26,7 +26,7 @@ class PersonForm(FlaskForm):
 
 class LessonForm(FlaskForm):
     teacher_id = StringField('Номер учителя')
-    group_id = StringField('Ночер группы')
+    group_id = StringField('Номер группы')
     submit = SubmitField('Применить')
 
 class GroupForm(FlaskForm):
