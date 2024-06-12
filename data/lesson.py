@@ -8,7 +8,6 @@ class Lesson(SqlAlchemyBase):
     __tablename__ = 'lessons'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    start_time = Column(DateTime, default=datetime.datetime.now)
     teacher_id = Column(Integer, ForeignKey('teachers.id'))
     group_id = Column(Integer, ForeignKey('groups.id'))
     group = relationship("Groups")

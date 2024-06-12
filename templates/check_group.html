@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block body %}
+ <h1>Информация о группах</h1>
+    {%for grou in group %}
+    <p>ID группы: {{ grou.id }}</p>
+    <p>Имя группы: {{ grou.name }}</p>
+    <a href="/group/{{grou.id}}" class="button">Изменить группу</a>
+    {% endfor %}
+
+{% endblock %}

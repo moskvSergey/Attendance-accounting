@@ -7,4 +7,5 @@
     {%for person in group.people %}
         <p>Имя студента: {{ person.name }}</p>
     {% endfor %}
+    <a href="/group/{{group.id}}/add_person" class="button">Добавить учащегося</a>
 {% endblock %}

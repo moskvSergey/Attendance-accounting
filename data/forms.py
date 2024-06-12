@@ -24,6 +24,10 @@ class PersonForm(FlaskForm):
     photo = FileField('Фото')
     submit = SubmitField('Применить')
 
+class LessonForm(FlaskForm):
+    teacher_id = StringField('Номер учителя')
+    group_id = StringField('Номер группы')
+    submit = SubmitField('Применить')
 
 class GroupForm(FlaskForm):
     name = StringField('Название')
