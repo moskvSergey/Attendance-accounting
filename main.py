@@ -8,10 +8,6 @@ from data.teacher import Teacher
 from data.lesson import Lesson
 from data.attendance import Attendance
 from data.forms import RegisterForm, LoginForm, PersonForm, GroupForm
-#import dlib
-#import cv2
-#import numpy as np
-#from ultralytics import YOLO
 from get_vector import get_face_vector
 
 
@@ -20,22 +16,7 @@ app.config['SECRET_KEY'] = 'my_secret_key'
 login_manager = LoginManager()
 login_manager.init_app(app)
 
-# Инициализация моделей
-#model = YOLO('data/model.pt')
-#model.fuse()
-#detector = dlib.get_frontal_face_detector()
-#shape_predictor = dlib.shape_predictor('data/shape_predictor_68_face_landmarks.dat')
-#face_rec_model = dlib.face_recognition_model_v1('data/dlib_face_recognition_resnet_model_v1.dat')
 
-
-#def get_face_vector(frame):
-    #gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    #faces = detector(gray)
-    #for face in faces:
-       # shape = shape_predictor(gray, face)
-        #face_descriptor = face_rec_model.compute_face_descriptor(frame, shape)
-        #return np.array(face_descriptor)
-    #return None
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -90,17 +71,8 @@ def login():
                                message="Неправильный логин или пароль",
                                form=form)
     return render_template('login.html', title='Авторизация', form=form)
-"""
-@app.route("/")
-def index():
-    db_sess = db_session.create_session()
-    news = db_sess.query(Lesson).filter(Lesson.teacher_id != True)
-    # if current_user.is_authenticated:
-    #     news = db_sess.query(News).filter(
-    #         (News.user == current_user) | (News.is_private != True))
-    # else:
-    #     news = db_sess.query(News).filter(News.is_private != True)
-    return render_template("index.html", news=news)"""
+
+
 @app.route("/<user_id>")
 def index(user_id):
     db_sess = db_session.create_session()
