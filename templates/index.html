@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block body %}
+<div class="row">
+    <div class="col-md-6 border rounded">
+        <h1>{{group_name}}</h1>
+        {% for item in attendance_records%}
+        <div class="col-md6 border rounded">
+            <div>
+                {{item.person.name}}
+                {{item.attended}}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

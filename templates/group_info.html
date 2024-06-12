@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block body %}
+ <h1>Информация о группе</h1>
+    <p>ID группы: {{ group.id }}</p>
+    <p>Название группы: {{ group.name }}</p>
+    {%for person in group.people %}
+        <p>Имя студента: {{ person.name }}</p>
+    {% endfor %}
+{% endblock %}
