@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from flask import Flask, render_template, redirect, request, abort, url_for
+from flask import Flask, render_template, redirect, request, abort, url_for, Response
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from data import db_session
 from data.groups import Groups
@@ -8,8 +8,35 @@ from data.teacher import Teacher
 from data.lesson import Lesson
 from data.attendance import Attendance
 from data.forms import RegisterForm, LoginForm, PersonForm, GroupForm
-from get_vector import get_face_vector
+#####################################
+import dlib
+import cv2
+from ultralytics import YOLO
+import numpy as np
+from PIL import Image
+import io
+import json
+from sqlalchemy import func
 
+
+model = YOLO('data/model.pt')
+model.fuse()
+detector = dlib.get_frontal_face_detector()
+shape_predictor_path = 'data/shape_predictor_68_face_landmarks.dat'
+face_rec_model_path = 'data/dlib_face_recognition_resnet_model_v1.dat'
+
+try:
+    shape_predictor = dlib.shape_predictor(shape_predictor_path)
+except RuntimeError as e:
+    print(f"Не удалось загрузить shape_predictor: {e}")
+    exit(1)
+
+try:
+    face_rec_model = dlib.face_recognition_model_v1(face_rec_model_path)
+except RuntimeError as e:
+    print(f"Не удалось загрузить face_rec_model: {e}")
+    exit(1)
+##############################################
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'my_secret_key'
@@ -65,7 +92,6 @@ def login():
         user = db_sess.query(Teacher).filter(Teacher.login == form.login.data).first()
         if user and user.check_password(form.password.data):
             login_user(user, remember=form.remember_me.data)
-            print(user.id)
             return redirect(url_for("index", user_id=user.id))
         return render_template('login.html',
                                message="Неправильный логин или пароль",
@@ -124,10 +150,14 @@ def add_person(group_id):
 
         if 'photo' in request.files:
             photo = request.files['photo']
-            face_points = get_face_vector(photo)
+            image_stream = io.BytesIO(photo.read())  # Преобразование в поток байтов
+            image = Image.open(image_stream)  # Открытие изображения с использованием библиотеки Pillow
+            frame_np = np.array(image)
+            face_points = get_face_vector(frame_np)
 
             # Сохранить вектор точек лица в базе данных
             person.face_vector = face_points
+            person.group_id = group_id
 
             db_sess.add(person)
             db_sess.commit()
@@ -140,6 +170,74 @@ def add_person(group_id):
     return render_template('add_person.html', job='Добавление студента', form=form)
 
 
+########################################################################FACE DETECTING
+
+def get_people(frame):
+    db_sess = db_session.create_session()
+    vector = get_face_vector(frame)
+    if not vector: return ""
+    vector = np.array(json.loads(vector))
+    persons = db_sess.query(Person).all()
+    for person in persons:
+        vector2 = np.array(json.loads(person.face_vector))
+        distance = np.linalg.norm(vector - vector2)
+        if distance < 0.5:
+            return person.name
+
+
+def get_face_vector(frame):
+    try:
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        faces = detector(gray)
+        for face in faces:
+            shape = shape_predictor(gray, face)
+            face_descriptor = face_rec_model.compute_face_descriptor(frame, shape)
+            face_vector_list = list(face_descriptor)
+            json_str = json.dumps(face_vector_list)
+            if json_str:
+                return json_str
+
+    except Exception as e:
+        print(f"Ошибка: {e}")
+
+def detect_head(frame):
+    results = model.track(frame, iou=0.4, conf=0.5, persist=True, imgsz=608, verbose=False)
+
+    if results[0].boxes.id is not None:
+        boxes = results[0].boxes.xyxy.cpu().numpy().astype(int)
+        ids = results[0].boxes.id.cpu().numpy().astype(int)
+        class_ids = results[0].boxes.cls.cpu().numpy().astype(int)
+
+        for box, id, cls in zip(boxes, ids, class_ids):
+            frame = cv2.rectangle(frame, (box[0], box[1]), (box[2], box[3]), (255, 0, 0), 2)
+            name = get_people(frame)
+            if name:
+                cv2.putText(frame, f'{name}', (box[0], box[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
+
+    return frame
+
+
+def generate_frames():
+    camera = cv2.VideoCapture(0)
+    while True:
+        success, frame = camera.read()
+        if not success:
+            break
+        else:
+            frame = detect_head(frame)
+            ret, buffer = cv2.imencode('.jpg', frame)
+            frame = buffer.tobytes()
+
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+
+
+@app.route('/video_feed')
+def video_feed():
+    return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+
+#############################################################################################
 if __name__ == "__main__":
     db_session.global_init("db/people.db")
     app.run(debug=False)

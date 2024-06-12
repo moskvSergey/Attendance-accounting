@@ -1,3 +1,8 @@
-flask
-dlib
-ultralytics
+dlib==19.22.0
+opencv-python==4.5.3.56
+ultralytics==0.10.3
+numpy==1.21.2
+Pillow==8.3.2
+Flask==2.0.1
+Flask-Login==0.5.0
+SQLAlchemy==1.4.25
