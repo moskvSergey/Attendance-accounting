@@ -152,6 +152,7 @@ def add_person(group_id):
             photo = request.files['photo']
             face_points = []
 
+
             # Сохранить вектор точек лица в базе данных
             person.face_vector = face_points
 
