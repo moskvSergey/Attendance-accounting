@@ -72,7 +72,7 @@ def reqister():
         return redirect('/')
     return render_template('register.html', title='Регистрация', form=form)
 
-
+@app.route("/")
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
@@ -81,23 +81,26 @@ def login():
         user = db_sess.query(Teacher).filter(Teacher.login == form.login.data).first()
         if user and user.check_password(form.password.data):
             login_user(user, remember=form.remember_me.data)
-            return redirect("/")
+            return redirect(url_for("index", user_id=user.id))
         return render_template('login.html',
                                message="Неправильный логин или пароль",
                                form=form)
     return render_template('login.html', title='Авторизация', form=form)
 
 
-@app.route("/")
-def index():
+@app.route("/<user_id>")
+def index(user_id):
     db_sess = db_session.create_session()
     if current_user.is_authenticated:
         current_time = datetime.now()
         two_hours_ago = current_time - timedelta(hours= 2)
-        lesson = db_sess.query(Lesson).filter(Lesson.start_time < current_time, Lesson.start_time > two_hours_ago).first()
-        group = db_sess.query(Groups).filter(Groups.id == lesson.group_id).first()
-        attendance_records = db_sess.query(Attendance, Person).join(Person).filter(Attendance.lesson_id == lesson.id).all()
-        return render_template("index.html", grop_name=group.name, attendance_records=attendance_records)
+        lesson = db_sess.query(Lesson).filter(Lesson.teacher_id==user_id, Lesson.start_time < current_time, Lesson.start_time > two_hours_ago).first()
+        if lesson:
+            group = db_sess.query(Groups).filter(Groups.id == lesson.group_id).first()
+            attendance_records = db_sess.query(Attendance, Person).join(Person).filter(Attendance.lesson_id == lesson.id).all()
+            return render_template("index.html", grop_name=group.name, attendance_records=attendance_records)
+        else:
+            return redirect(url_for("add_group"))
     else:
         return redirect(url_for("login"))
 
