@@ -8,10 +8,7 @@ from data.teacher import Teacher
 from data.lesson import Lesson
 from data.attendance import Attendance
 from data.forms import RegisterForm, LoginForm, PersonForm, GroupForm
-#import dlib
-#import cv2
-#import numpy as np
-#from ultralytics import YOLO
+from get_vector import get_face_vector
 
 
 app = Flask(__name__)
@@ -19,22 +16,7 @@ app.config['SECRET_KEY'] = 'my_secret_key'
 login_manager = LoginManager()
 login_manager.init_app(app)
 
-# Инициализация моделей
-#model = YOLO('data/model.pt')
-#model.fuse()
-#detector = dlib.get_frontal_face_detector()
-#shape_predictor = dlib.shape_predictor('data/shape_predictor_68_face_landmarks.dat')
-#face_rec_model = dlib.face_recognition_model_v1('data/dlib_face_recognition_resnet_model_v1.dat')
 
-
-#def get_face_vector(frame):
-    #gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    #faces = detector(gray)
-    #for face in faces:
-       # shape = shape_predictor(gray, face)
-        #face_descriptor = face_rec_model.compute_face_descriptor(frame, shape)
-        #return np.array(face_descriptor)
-    #return None
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -72,7 +54,9 @@ def reqister():
         return redirect('/')
     return render_template('register.html', title='Регистрация', form=form)
 
-@app.route("/")
+@app.route("/", methods=['GET', 'POST'])
+def start():
+    return render_template('start.html')
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
@@ -81,6 +65,7 @@ def login():
         user = db_sess.query(Teacher).filter(Teacher.login == form.login.data).first()
         if user and user.check_password(form.password.data):
             login_user(user, remember=form.remember_me.data)
+            print(user.id)
             return redirect(url_for("index", user_id=user.id))
         return render_template('login.html',
                                message="Неправильный логин или пароль",
@@ -116,7 +101,7 @@ def add_group():
         db_sess.add(group)
         db_sess.commit()
         return redirect(url_for("group_info", group_id=group.id))
-    return render_template('add_person.html', form=form)
+    return render_template('add_group.html', form=form)
 
 
 @app.route('/group/<group_id>', methods=['GET'])
@@ -128,24 +113,31 @@ def group_info(group_id):
     return render_template('group_info.html', group=group)
 
 
-@app.route('/<group_id>/add_person',  methods=['GET', 'POST'])
+@app.route('/group/<group_id>/add_person', methods=['GET', 'POST'])
 @login_required
-def add_jobs(group_id):
+def add_person(group_id):
     form = PersonForm()
     if form.validate_on_submit():
         db_sess = db_session.create_session()
         person = Person()
         person.name = form.name.data
-        db_sess.add(person)
-        db_sess.commit()
 
-        group = db_sess.query(Groups).filter(Groups.id == group_id).first()
-        group.people.append(person)
-        db_sess.commit()
+        if 'photo' in request.files:
+            photo = request.files['photo']
+            face_points = get_face_vector(photo)
 
-        return redirect(url_for("group_info", id=group_id))
+            # Сохранить вектор точек лица в базе данных
+            person.face_vector = face_points
+
+            db_sess.add(person)
+            db_sess.commit()
+
+            group = db_sess.query(Groups).filter(Groups.id == group_id).first()
+            group.people.append(person)
+            db_sess.commit()
+
+            return redirect(url_for("group_info", group_id=group_id))
     return render_template('add_person.html', job='Добавление студента', form=form)
-
 
 
 if __name__ == "__main__":
