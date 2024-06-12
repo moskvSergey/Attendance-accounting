@@ -12,6 +12,7 @@ from data.forms import RegisterForm, LoginForm, PersonForm, GroupForm
 #import cv2
 #import numpy as np
 #from ultralytics import YOLO
+from get_vector import get_face_vector
 
 
 app = Flask(__name__)
@@ -128,7 +129,7 @@ def add_group():
         db_sess.add(group)
         db_sess.commit()
         return redirect(url_for("group_info", group_id=group.id))
-    return render_template('add_person.html', form=form)
+    return render_template('add_group.html', form=form)
 
 
 @app.route('/group/<group_id>', methods=['GET'])
@@ -140,24 +141,31 @@ def group_info(group_id):
     return render_template('group_info.html', group=group)
 
 
-@app.route('/<group_id>/add_person',  methods=['GET', 'POST'])
+@app.route('/group/<group_id>/add_person', methods=['GET', 'POST'])
 @login_required
-def add_jobs(group_id):
+def add_person(group_id):
     form = PersonForm()
     if form.validate_on_submit():
         db_sess = db_session.create_session()
         person = Person()
         person.name = form.name.data
-        db_sess.add(person)
-        db_sess.commit()
 
-        group = db_sess.query(Groups).filter(Groups.id == group_id).first()
-        group.people.append(person)
-        db_sess.commit()
+        if 'photo' in request.files:
+            photo = request.files['photo']
+            face_points = get_face_vector(photo)
 
-        return redirect(url_for("group_info", id=group_id))
+            # Сохранить вектор точек лица в базе данных
+            person.face_vector = face_points
+
+            db_sess.add(person)
+            db_sess.commit()
+
+            group = db_sess.query(Groups).filter(Groups.id == group_id).first()
+            group.people.append(person)
+            db_sess.commit()
+
+            return redirect(url_for("group_info", group_id=group_id))
     return render_template('add_person.html', job='Добавление студента', form=form)
-
 
 
 if __name__ == "__main__":
