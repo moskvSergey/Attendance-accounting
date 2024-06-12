@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from flask import Flask, render_template, redirect, request, abort, url_for
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
+from flask_restful import Api
 from data import db_session
 from data.groups import Groups
 from data.person import Person
@@ -9,10 +10,12 @@ from data.lesson import Lesson
 from data.attendance import Attendance
 from data.forms import RegisterForm, LoginForm, PersonForm, GroupForm, LessonForm
 #from get_vector import get_face_vector
-
+import group_api
+import groups_resorces
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'my_secret_key'
+api = Api(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 
@@ -163,6 +166,19 @@ def add_person(group_id):
     return render_template('add_person.html', job='Добавление студента', form=form)
 
 
-if __name__ == "__main__":
+def main():
     db_session.global_init("db/people.db")
+    app.register_blueprint(group_api.blueprint)
+
+    # для списка объектов
+    api.add_resource(groups_resorces.GroupsListResource, '/api/v2/groups')
+
+    # для одного объекта
+    api.add_resource(groups_resorces.GroupsResource, '/api/v2/groups/<int:groups_id>')
+
     app.run(debug=False)
+
+if __name__ == "__main__":
+    main()
+
+
